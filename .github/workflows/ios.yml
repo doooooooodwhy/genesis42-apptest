@@ -1,9 +1,5 @@
 name: iOS IPA
-on: 
-  workflow_dispatch: 
+on: [workflow_dispatch]
 jobs:
   build:
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses
+    runs-on
