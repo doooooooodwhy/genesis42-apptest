@@ -8,12 +8,15 @@ jobs:
     - uses: subosito/flutter-action@v2
       with:
         channel: stable
+        flutter-version: '3.24.0'
     - run: flutter pub get
     - run: flutter build ios --release --no-codesign
-    - run: mkdir Payload
-    - run: cp -r build/ios/iphoneos/Runner.app Payload/
-    - run: zip -r SnakeGame.ipa Payload/
+    - name: Create IPA
+      run: |
+        mkdir -p Payload
+        cp -r build/ios/iphoneos/Runner.app Payload/
+        zip -r MyTube.ipa Payload/
     - uses: actions/upload-artifact@v4
       with:
-        name: SnakeGame.ipa
-        path: SnakeGame.ipa
+        name: MyTube.ipa
+        path: MyTube.ipa
