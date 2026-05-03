@@ -16,6 +16,8 @@ class _SnakeGameState extends State<SnakeGame> {
   bool gameOver = false;
   Timer? timer;
   final random = Random();
+  var direction = 1.0; // 1=right, -1=left
+  bool justChanged = false;
 
   @override
   void initState() {
@@ -25,6 +27,11 @@ class _SnakeGameState extends State<SnakeGame> {
 
   void startGame() {
     timer?.cancel();
+    snake = [Offset(10, 10)];
+    food = Offset(15, 15);
+    direction = 1.0;
+    gameOver = false;
+    justChanged = false;
     timer = Timer.periodic(Duration(milliseconds: 200), (Timer t) {
       if (!gameOver) moveSnake();
     });
@@ -32,14 +39,41 @@ class _SnakeGameState extends State<SnakeGame> {
 
   void moveSnake() {
     final head = snake.first;
-    snake.insert(0, Offset(head.dx + 1, head.dy));
+    Offset newHead;
     
+    // ONE BUTTON: Toggle left/right
+    if (direction == 1) {
+      newHead = Offset(head.dx + 1, head.dy);
+    } else {
+      newHead = Offset(head.dx - 1, head.dy);
+    }
+
+    // WALL COLLISION
+    if (newHead.dx < 0 || newHead.dx > 29) {
+      gameOver = true;
+      setState(() {});
+      return;
+    }
+
+    snake.insert(0, newHead);
+    
+    // EAT FOOD
     if ((food - head).distance < 1) {
-      food = Offset(random.nextInt(30).toDouble(), random.nextInt(30).toDouble());
+      food = Offset(random.nextInt(29).toDouble(), random.nextInt(29).toDouble());
     } else {
       snake.removeLast();
     }
+
+    // SELF COLLISION (skip head)
+    for (int i = 1; i < snake.length; i++) {
+      if ((snake[i] - newHead).distance < 0.5) {
+        gameOver = true;
+        setState(() {});
+        return;
+      }
+    }
     
+    justChanged = false;
     setState(() {});
   }
 
@@ -47,18 +81,24 @@ class _SnakeGameState extends State<SnakeGame> {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
+        backgroundColor: Colors.black,
         body: CustomPaint(
           size: Size.infinite,
           painter: SnakePainter(snake, food, gameOver),
         ),
         floatingActionButton: FloatingActionButton(
-          onPressed: gameOver ? () => setState(() {
-            snake = [Offset(10, 10)];
-            food = Offset(15, 15);
-            gameOver = false;
-            startGame();
-          }) : null,
-          child: Icon(Icons.refresh),
+          backgroundColor: Colors.red,
+          onPressed: () {
+            if (!gameOver) {
+              direction = -direction; // Toggle direction
+              justChanged = true;
+            } else {
+              startGame();
+            }
+          },
+          child: gameOver 
+            ? Icon(Icons.refresh, color: Colors.white) 
+            : Icon(Icons.swap_horiz, color: Colors.white),
         ),
       ),
     );
@@ -76,7 +116,7 @@ class SnakePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final cellSize = size.width / 30;
     
-    // Snake
+    // Snake (green)
     final snakePaint = Paint()..color = Colors.green;
     for (var segment in snake) {
       canvas.drawRect(
@@ -85,7 +125,7 @@ class SnakePainter extends CustomPainter {
       );
     }
     
-    // Food
+    // Food (red)
     final foodPaint = Paint()..color = Colors.red;
     canvas.drawRect(
       Rect.fromLTWH(food.dx * cellSize, food.dy * cellSize, cellSize, cellSize),
@@ -94,11 +134,14 @@ class SnakePainter extends CustomPainter {
     
     if (gameOver) {
       final textPainter = TextPainter(
-        text: TextSpan(text: 'GAME OVER\nTap REFRESH', style: TextStyle(color: Colors.white, fontSize: 30)),
+        text: TextSpan(
+          text: 'GAME OVER\nTAP SWAP TO RESTART', 
+          style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)
+        ),
         textDirection: TextDirection.ltr,
       );
       textPainter.layout();
-      textPainter.paint(canvas, Offset(size.width/2 - 100, size.height/2 - 50));
+      textPainter.paint(canvas, Offset(size.width/2 - 120, size.height/2 - 40));
     }
   }
 
