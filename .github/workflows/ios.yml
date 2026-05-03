@@ -9,7 +9,14 @@ jobs:
       with:
         channel: stable
     - run: flutter pub get
-    - run: flutter build ios --release --no-codesign
+    - name: Build iOS
+      run: |
+        flutter build ios --release --no-codesign \
+          --dart-define=FLUTTER_BUILD_MODE=release
+      env:
+        FLUTTER_XCODE_CODE_SIGN_IDENTITY: ""
+        FLUTTER_XCODE_CODE_SIGNING_REQUIRED: "NO"
+        FLUTTER_XCODE_CODE_SIGN_ENTITLEMENTS: ""
     - name: Create IPA
       run: |
         mkdir -p Payload
