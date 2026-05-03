@@ -9,13 +9,9 @@ jobs:
       with:
         channel: stable
     - run: flutter pub get
-    - name: Setup Xcode
-      uses: maxim-lobanov/setup-xcode@v1
-      with:
-        xcode-version: latest-stable
     - run: flutter build ios --release --no-codesign
     - run: mkdir -p build/ios/ipa
-    - run: zip -r build/ios/ipa/app.ipa .ios/Runner.ipa
+    - run: zip -r build/ios/ipa/app.ipa build/ios/iphoneos/Runner.app
     - uses: actions/upload-artifact@v4
       with:
         name: app.ipa
