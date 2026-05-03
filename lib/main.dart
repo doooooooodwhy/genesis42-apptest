@@ -1,15 +1,9 @@
-import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui';
+import 'package:flutter/material.dart';
 
-void main() => runApp(GameApp());
-
-class GameApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(home: SnakeGame());
-  }
-}
+void main() => runApp(SnakeGame());
 
 class SnakeGame extends StatefulWidget {
   @override
@@ -17,56 +11,97 @@ class SnakeGame extends StatefulWidget {
 }
 
 class _SnakeGameState extends State<SnakeGame> {
-  List<Offset> snake = [Offset(5, 5)];
-  Offset direction = Offset(1, 0);
-  Offset food;
+  List<Offset> snake = [Offset(10, 10)];
+  Offset food = Offset(15, 15);
   bool gameOver = false;
+  Timer? timer;
+  final random = Random();
 
   @override
   void initState() {
     super.initState();
-    food = Offset(10, 10);
-    Timer.periodic(Duration(milliseconds: 200), (timer) {
-      if (!gameOver) setState(moveSnake);
+    startGame();
+  }
+
+  void startGame() {
+    timer?.cancel();
+    timer = Timer.periodic(Duration(milliseconds: 200), (Timer t) {
+      if (!gameOver) moveSnake();
     });
   }
 
-  void moveSnake(Timer t) {
-    Offset head = snake.first + direction;
-    if (head.dx < 0 || head.dx >= 20 || head.dy < 0 || head.dy >= 20 ||
-        snake.contains(head)) {
-      gameOver = true;
-      return;
-    }
-    snake.insert(0, head);
-    if (head == food) {
-      food = Offset(Random().nextInt(20), Random().nextInt(20));
+  void moveSnake() {
+    final head = snake.first;
+    snake.insert(0, Offset(head.dx + 1, head.dy));
+    
+    if ((food - head).distance < 1) {
+      food = Offset(random.nextInt(30).toDouble(), random.nextInt(30).toDouble());
     } else {
       snake.removeLast();
     }
-  }
-
-  void changeDirection(Offset newDir) {
-    if ((newDir.dx != -direction.dx || newDir.dy != -direction.dy) && !gameOver)
-      direction = newDir;
+    
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(gameOver ? 'Game Over!' : 'Snake')),
-      body: GestureDetector(
-        onPanUpdate: (details) {
-          if (details.delta.dx > 10) changeDirection(Offset(1, 0));
-          else if (details.delta.dx < -10) changeDirection(Offset(-1, 0));
-          else if (details.delta.dy > 10) changeDirection(Offset(0, 1));
-          else if (details.delta.dy < -10) changeDirection(Offset(0, -1));
-        },
-        child: CustomPaint(
+    return MaterialApp(
+      home: Scaffold(
+        body: CustomPaint(
           size: Size.infinite,
           painter: SnakePainter(snake, food, gameOver),
         ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: gameOver ? () => setState(() {
+            snake = [Offset(10, 10)];
+            food = Offset(15, 15);
+            gameOver = false;
+            startGame();
+          }) : null,
+          child: Icon(Icons.refresh),
+        ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: gameOver ? () => setState(() {
-          snake
+    );
+  }
+}
+
+class SnakePainter extends CustomPainter {
+  final List<Offset> snake;
+  final Offset food;
+  final bool gameOver;
+
+  SnakePainter(this.snake, this.food, this.gameOver);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cellSize = size.width / 30;
+    
+    // Snake
+    final snakePaint = Paint()..color = Colors.green;
+    for (var segment in snake) {
+      canvas.drawRect(
+        Rect.fromLTWH(segment.dx * cellSize, segment.dy * cellSize, cellSize, cellSize),
+        snakePaint,
+      );
+    }
+    
+    // Food
+    final foodPaint = Paint()..color = Colors.red;
+    canvas.drawRect(
+      Rect.fromLTWH(food.dx * cellSize, food.dy * cellSize, cellSize, cellSize),
+      foodPaint,
+    );
+    
+    if (gameOver) {
+      final textPainter = TextPainter(
+        text: TextSpan(text: 'GAME OVER\nTap REFRESH', style: TextStyle(color: Colors.white, fontSize: 30)),
+        textDirection: TextDirection.ltr,
+      );
+      textPainter.layout();
+      textPainter.paint(canvas, Offset(size.width/2 - 100, size.height/2 - 50));
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
