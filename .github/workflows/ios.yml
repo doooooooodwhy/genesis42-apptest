@@ -11,9 +11,9 @@ jobs:
     - run: flutter pub get
     - run: flutter build ios-framework --release
     - run: mkdir Payload
-    - run: cp -r build/ios/iphoneos/Release-iphoneos/Runner.framework Payload/
+    - run: cp -r build/ios/framework/Release/Runner.framework Payload/
     - run: zip -r app.ipa Payload/
     - uses: actions/upload-artifact@v4
       with:
-        name: app.ipa
+        name: SnakeGame.ipa
         path: app.ipa
