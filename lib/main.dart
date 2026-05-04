@@ -23,4 +23,4 @@ class _MyTubeState extends State<MyTube> {
   }
 
   Future<void> fetchVideos() async {
-    setState(() => loading =
+    setState(() => loading = true);
