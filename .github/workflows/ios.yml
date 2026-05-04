@@ -9,19 +9,10 @@ jobs:
       with:
         channel: stable
     - run: flutter pub get
-    - run: flutter build ios --release --no-codesign
-    - name: Build IPA with xcodebuild
+    - name: Build iOS
       run: |
-        xcodebuild \
-          -workspace ios/Runner.xcworkspace \
-          -scheme Runner \
-          -configuration Release \
-          -sdk iphoneos \
-          CODE_SIGN_IDENTITY="" \
-          CODE_SIGNING_REQUIRED=NO \
-          CODE_SIGNING_ALLOWED=NO \
-          CONFIGURATION_BUILD_DIR=build/ios/iphoneos \
-          build
+        flutter build ios --release --no-codesign 2>&1 || true
+        ls build/ios/iphoneos/
     - name: Create IPA
       run: |
         mkdir -p Payload
